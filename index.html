@@ -1,0 +1,112 @@
+<html>
+<head>
+<title>Solid-Cam</title>
+<link href="https://developers.google.com/web/fundamentals/media/capturing-images/" rel="thanks" />
+<scriptfoo src="https://linkeddata.github.io/mashlib/dist/mashlib.js" />
+<script src="https://mikeadams1.github.io/form-playground/mashlib.js"></script>
+
+<script>
+  function cameraCaptureControl (dom, store, destination, doneCallback) {
+    const div = dom.createElement('div')
+    const player = div.appendChild(dom.createElement('video'))
+    const controlStyle = 'border-radius: 0.5em; margin: 0.8em; width: 320; height:240;'
+    const contentType = 'image/png'
+    // player.setAttribute('controls', '1')
+    player.setAttribute('autoplay', '1')
+    const button = div.appendChild(dom.createElement('button'))
+    button.textContent = 'Capture'
+    player.setAttribute('style', controlStyle)
+    // const canvas = document.getElementById('canvas');
+    var canvas
+
+    const constraints = {
+      video: true,
+    };
+
+    function grabCanvas () {
+      // Draw the video frame to the canvas.
+      canvas = dom.createElement('canvas')
+      canvas.setAttribute('width', '320')
+      canvas.setAttribute('height', '240')
+      canvas.setAttribute('style', controlStyle)
+      player.parentNode.appendChild(canvas)
+
+      const context = canvas.getContext('2d');
+      context.drawImage(player, 0, 0, canvas.width, canvas.height);
+
+      // Stop all video streams.
+      player.srcObject.getVideoTracks().forEach(track => track.stop());
+      player.parentNode.removeChild(player)
+
+      canvas.toBlob(blob => {
+        let msg = `got blob type ${blob.type} size ${blob.size}`
+        console.log(msg)
+        saveBlob(blob, destination)
+        alert(msg)
+      }, 'image/png') // toBlob
+    }
+
+    function saveBlob (blob, destination) {
+      let contentType = blob.type
+      if (!confirm('Save picture to ' + destination + ' ?')) return
+      console.log('Putting ' + blob.size + ' bytes of ' + contentType + ' to ' + destination)
+      store.fetcher.webOperation('PUT', destination.uri, {data: blob, contentType: contentType}).then(resp => {
+        console.log('ok saved ' + destination )
+        alert('saved ok: ' + destination)
+      }, err=> {
+        alert(err)
+      })
+    }
+
+    button.addEventListener('click', grabCanvas)
+
+    // Attach the video stream to the video element and autoplay.
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then((stream) => {
+        player.srcObject = stream;
+      });
+    return div
+  }
+
+  function cameraButton (dom, store, destination) {
+    const div = dom.createElement('div')
+    const but = UI.widgets.button(dom, UI.icons.iconBase + 'noun_383448.svg', 'Take picture')
+    var control
+    function restoreButton () {
+      div.removeChild(control)
+      div.appendChild(but)
+    }
+    div.appendChild(but)
+    but.addEventListener('click', event => {
+      div.removeChild(but)
+      control = control || cameraCaptureControl(dom, store, destination, restoreButton)
+      div.appendChild(control)
+    })
+    return div
+  }
+
+
+  document.addEventListener('DOMContentLoaded', e => {
+    let dom = document
+    let store = window.UI.store
+    let div = dom.getElementById('target')
+    const here = $rdf.sym(document.location.href)
+    const destination = $rdf.sym(here.dir().uri + 'img' + Date.now() + '.png')
+    // const destination = $rdf.sym('https://timbl.com/timbl/Public/Test/2018/0000TestImage.png')
+    let button = cameraButton(dom, store, destination)
+    // let control = cameraCaptureControl(dom, store, destination)
+    div.appendChild(button)
+  })
+
+
+</script>
+
+</head>
+<body>
+
+  <div id='target'>
+  </div>
+<p>Click the link above to launch camera</p>
+<p>This is a hack timbl created.</p>
+ </body>
+</html>
