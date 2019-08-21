@@ -92,7 +92,7 @@
     let div = dom.getElementById('target')
     const here = $rdf.sym(document.location.href)
     const destination = $rdf.sym(here.dir().uri + 'img' + Date.now() + '.png')
-    // const destination = $rdf.sym('https://mikeadams1.github.io/public/0000TestImage.png')
+    // const destination = $rdf.sym('https://mikeadams1.github.io/public.html/0000TestImage.png')
     let button = cameraButton(dom, store, destination)
     // let control = cameraCaptureControl(dom, store, destination)
     div.appendChild(button)
